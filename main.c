@@ -1,4 +1,4 @@
-/* Módulo: Main / Programa Principal */
+/* Módulo: Main / Programa Principal (Foco AP2: ADC + UART) */
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -7,7 +7,6 @@
 #include "hardware/gpio.h"
 
 // --- CONSTANTES NECESSÁRIAS NO MAIN ---
-#define LED_PIN 25
 #define ADC_CHANNEL_LDR  0
 #define ADC_CHANNEL_TEMP 1
 #define UART_ID uart0
@@ -22,7 +21,7 @@ typedef struct {
     uint8_t lim_lum_h;
     uint8_t lim_lum_l;
     uint8_t lim_temp;
-    uint8_t saidas;
+    uint8_t saidas; // Armazenado na memória via UART (Implementação física no projeto final)
 } ConfigSistema;
 
 // --- PROTÓTIPOS DE FUNÇÕES (Módulos C Externos) ---
@@ -34,7 +33,7 @@ void uart_protocolo_init(void);
 void uart_enviar_telemetria(float temp, uint8_t lum_pct, bool cortina_aberta);
 bool uart_processar_recepcao(ConfigSistema *cfg);
 
-// --- FUNÇÕES AUXILIARES (Substituindo o Assembly) ---
+// --- FUNÇÕES AUXILIARES (Lógica da Cortina em C) ---
 uint32_t mapear_adc(uint32_t raw, uint32_t raw_max, uint32_t out_max) {
     return (raw * out_max) / raw_max;
 }
@@ -51,9 +50,6 @@ bool aplicar_histerese(uint8_t valor, uint8_t lim_h, uint8_t lim_l, bool estado_
 
 int main() {
     stdio_init_all();
-    
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
     
     adc_sensores_init();
     uart_protocolo_init();
@@ -73,25 +69,25 @@ int main() {
     uart_puts(UART_ID, "-------------------------------------------------\r\n");
 
     while (true) {
+        // A função abaixo processa a UART. Se o comando SAIDAS for recebido, 
+        // ele será validado e guardado em cfg.saidas, cumprindo o requisito da AP2.
         uart_processar_recepcao(&cfg);
         
+        // Leituras ADC
         uint16_t ldr_raw = adc_ler_canal(ADC_CHANNEL_LDR);
-        // Usando a função implementada em C agora
         uint8_t lum_pct = (uint8_t)mapear_adc(ldr_raw, 4095, 100);
         
         uint16_t lm35_raw = adc_ler_canal(ADC_CHANNEL_TEMP);
         float temp_c = adc_raw_para_temperatura(lm35_raw);
         
-        // Aplicando a histerese em C
+        // Lógica
         cortina_aberta = aplicar_histerese(lum_pct, cfg.lim_lum_h, cfg.lim_lum_l, cortina_aberta);
         
+        // Envia feedback para o terminal PC via UART
         uart_enviar_telemetria(temp_c, lum_pct, cortina_aberta);
         
-        gpio_put(LED_PIN, 1);
-        sleep_ms(50); 
-        gpio_put(LED_PIN, 0);
-        
-        sleep_ms(950);
+        // Tempo de amostragem
+        sleep_ms(1000);
     }
 
     return 0;
