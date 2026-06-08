@@ -1,13 +1,7 @@
-# Generated Cmake Pico project file
-
 cmake_minimum_required(VERSION 3.13)
-
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# Initialise pico_sdk from installed location
-# (note this can come from environment, CMake cache etc)
 
 # == DO NOT EDIT THE FOLLOWING LINES for the Raspberry Pi Pico VS Code Extension to work ==
 if(WIN32)
@@ -23,40 +17,40 @@ if (EXISTS ${picoVscode})
     include(${picoVscode})
 endif()
 # ====================================================================================
+
 set(PICO_BOARD pico2_w CACHE STRING "Board type")
 
-# Pull in Raspberry Pi Pico SDK (must be before project)
+# IMPORTANTE: definir RISC-V ANTES de incluir o Pico SDK
+set(PICO_PLATFORM rp2350-riscv)
+
 include(pico_sdk_import.cmake)
 
-project(cortina_por_luminosidade C CXX ASM)
+# Removido o ASM das linguagens suportadas
+project(cortina_por_luminosidade C CXX)
 
-# Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
-# Add executable. Default name is the project name, version 0.1
-
-add_executable(cortina_por_luminosidade cortina_por_luminosidade.c )
+# Removido o utils_riscv.S
+add_executable(cortina_por_luminosidade 
+    main.c
+    adc_sensores.c
+    uart_protocolo.c
+)
 
 pico_set_program_name(cortina_por_luminosidade "cortina_por_luminosidade")
 pico_set_program_version(cortina_por_luminosidade "0.1")
 
-# Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(cortina_por_luminosidade 0)
-pico_enable_stdio_usb(cortina_por_luminosidade 1)
+# Habilitar UART0 (usada pelo projeto) e desabilitar USB
+pico_enable_stdio_uart(cortina_por_luminosidade 1)
+pico_enable_stdio_usb(cortina_por_luminosidade 0)
 
-# Add the standard library to the build
-target_link_libraries(cortina_por_luminosidade
-        pico_stdlib)
-
-# Add the standard include files to the build
-target_include_directories(cortina_por_luminosidade PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}
+target_link_libraries(cortina_por_luminosidade 
+    pico_stdlib
+    hardware_adc
+    hardware_uart
+    hardware_gpio
+    hardware_timer
 )
 
-# Add any user requested libraries
-target_link_libraries(cortina_por_luminosidade 
-        
-        )
-
+target_include_directories(cortina_por_luminosidade PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 pico_add_extra_outputs(cortina_por_luminosidade)
-
