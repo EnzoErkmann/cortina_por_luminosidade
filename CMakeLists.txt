@@ -42,7 +42,7 @@ pico_set_program_version(cortina_por_luminosidade "0.1")
 
 # Habilitar UART0 (usada pelo projeto) e desabilitar USB
 pico_enable_stdio_uart(cortina_por_luminosidade 1)
-pico_enable_stdio_usb(cortina_por_luminosidade 0)
+pico_enable_stdio_usb(cortina_por_luminosidade 1)
 
 target_link_libraries(cortina_por_luminosidade 
     pico_stdlib
