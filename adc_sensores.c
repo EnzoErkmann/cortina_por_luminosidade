@@ -1,6 +1,7 @@
 /* Módulo: ADC Sensores */
 #include "hardware/adc.h"
 #include "hardware/gpio.h"
+#include "pico/stdlib.h"
 #include <stdint.h>
 
 // Pinos ADC
@@ -15,6 +16,14 @@ void adc_sensores_init(void) {
 
 uint16_t adc_ler_canal(uint8_t canal) {
     adc_select_input(canal);
+    
+    // Aumentei o delay para garantir estabilização do pino
+    sleep_us(200); 
+    
+    // Leitura dummy para descarregar capacitor do canal anterior
+    (void)adc_read(); 
+    
+    // Leitura verdadeira
     return adc_read();
 }
 
