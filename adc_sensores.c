@@ -16,8 +16,6 @@ void adc_sensores_init(void) {
 
 uint16_t adc_ler_canal(uint8_t canal) {
     adc_select_input(canal);
-    
-    // Aumentei o delay para garantir estabilização do pino
     sleep_us(200); 
     
     // Leitura dummy para descarregar capacitor do canal anterior
