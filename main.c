@@ -1,4 +1,4 @@
-/* Módulo: Main / Programa Principal (VERSÃO TESTE USB) */
+/* Módulo: Main / Programa Principal */
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -56,8 +56,7 @@ int main() {
     
     bool cortina_aberta = false; 
 
-    // Mensagens de inicialização agora via USB (printf)
-    // Um pequeno delay para dar tempo de você abrir o Serial Monitor
+    // delay para dar tempo de abrir o Serial Monitor
     sleep_ms(2000); 
     printf("=== AP2 Projeto 19 - MODO TESTE USB ===\n");
     printf("ADC0=GPIO26(LDR) | ADC1=GPIO27(LM35)\n");
@@ -71,9 +70,7 @@ int main() {
         
         uint16_t lm35_raw = adc_ler_canal(ADC_CHANNEL_TEMP);
         float temp_c = adc_raw_para_temperatura(lm35_raw);
-        
-        // DEBUG removido: não imprime mais RAW_* e duplicado de TEMP
-        
+                
         cortina_aberta = aplicar_histerese(lum_pct, cfg.lim_lum_h, cfg.lim_lum_l, cortina_aberta);
         
         uart_enviar_telemetria(temp_c, lum_pct, cortina_aberta);
