@@ -20,17 +20,14 @@ endif()
 
 set(PICO_BOARD pico2_w CACHE STRING "Board type")
 
-# IMPORTANTE: definir RISC-V ANTES de incluir o Pico SDK
 set(PICO_PLATFORM rp2350-riscv)
 
 include(pico_sdk_import.cmake)
 
-# Removido o ASM das linguagens suportadas
 project(cortina_por_luminosidade C CXX)
 
 pico_sdk_init()
 
-# Removido o utils_riscv.S
 add_executable(cortina_por_luminosidade 
     main.c
     adc_sensores.c
@@ -40,7 +37,6 @@ add_executable(cortina_por_luminosidade
 pico_set_program_name(cortina_por_luminosidade "cortina_por_luminosidade")
 pico_set_program_version(cortina_por_luminosidade "0.1")
 
-# Habilitar UART0 (usada pelo projeto) e desabilitar USB
 pico_enable_stdio_uart(cortina_por_luminosidade 0)
 pico_enable_stdio_usb(cortina_por_luminosidade 1)
 
