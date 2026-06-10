@@ -1,4 +1,4 @@
-/* Módulo: UART Protocolo (VERSÃO LOOPBACK MISTO) */
+/* Módulo: UART Protocolo (LOOPBACK) */
 #include "hardware/uart.h"
 #include "hardware/gpio.h"
 #include "pico/stdlib.h"
@@ -14,7 +14,7 @@
 #define UART_BUF_SIZE 128
 
 void uart_protocolo_init(void) {
-    // 1. Inicializa a porta UART física na placa (Canal do Hardware)
+    // Inicializa a porta UART física na placa (Canal do Hardware)
     uart_init(UART_ID, BAUD_RATE);
     gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART);
     gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
@@ -27,11 +27,11 @@ void uart_enviar_telemetria(float temp, uint8_t lum_pct, bool cortina_aberta) {
     snprintf(tx_buffer, sizeof(tx_buffer), "TEMP:%.1f,LUM:%d,CORTINA:%s\r\n", 
              temp, lum_pct, cortina_aberta ? "ABERTA" : "FECHADA");
              
-    // 2. "Cospe" os dados fisicamente pelo pino GPIO0 (TX)
+    // Envia os dados fisicamente pelo pino GPIO0 (TX)
     uart_puts(UART_ID, tx_buffer);
 }
 
-// 3. Nova função que escuta o pino físico e envia pro cabo USB
+// Nova função que escuta o pino físico e envia pro cabo USB
 void uart_ler_loopback_e_imprimir(void) {
     char rx_buffer[UART_BUF_SIZE];
     int i = 0;
@@ -42,7 +42,7 @@ void uart_ler_loopback_e_imprimir(void) {
     }
     rx_buffer[i] = '\0'; // Finaliza a string
     
-    // Se ouviu algo, usa o printf para mandar pro Monitor do VS Code via USB
+    // Se ouviu algo, usa o printf para mandar pro Monitor via USB
     if (i > 0) {
         printf("Loopback Recebido -> %s", rx_buffer);
     }
