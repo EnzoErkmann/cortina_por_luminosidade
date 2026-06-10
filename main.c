@@ -1,4 +1,4 @@
-/* Módulo: Main / Programa Principal (VERSÃO LOOPBACK MISTO) */
+/* Módulo: Main / Programa Principal (LOOPBACK) */
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -72,13 +72,13 @@ int main() {
         
         cortina_aberta = aplicar_histerese(lum_pct, cfg.lim_lum_h, cfg.lim_lum_l, cortina_aberta);
         
-        // PASSO 1: O Pico emite o dado pelo pino físico TX
+        // Pico emite o dado pelo pino físico TX
         uart_enviar_telemetria(temp_c, lum_pct, cortina_aberta);
         
-        // PASSO 2: Espera o dado viajar pelo jumper até o pino RX
+        // Espera o dado viajar pelo jumper até o pino RX
         sleep_ms(50);
         
-        // PASSO 3: Lê o pino RX e imprime na tela do VS Code
+        // Lê o pino RX e imprime na tela
         uart_ler_loopback_e_imprimir();
         
         // Tempo restante da amostragem total do sistema
