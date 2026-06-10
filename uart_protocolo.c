@@ -31,7 +31,6 @@ void uart_enviar_telemetria(float temp, uint8_t lum_pct, bool cortina_aberta) {
     uart_puts(UART_ID, tx_buffer);
 }
 
-// Nova função que escuta o pino físico e envia pro cabo USB
 void uart_ler_loopback_e_imprimir(void) {
     char rx_buffer[UART_BUF_SIZE];
     int i = 0;
