@@ -1,4 +1,4 @@
-/* Módulo: Main / Programa Principal */
+/* Módulo: Main / Programa Principal (LOOPBACK) */
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -25,10 +25,11 @@ typedef struct {
 void adc_sensores_init(void);
 uint16_t adc_ler_canal(uint8_t canal);
 float adc_raw_para_temperatura(uint16_t raw);
-uint8_t adc_raw_para_luminosidade_pct(uint16_t raw); // <-- adicionada
+uint8_t adc_raw_para_luminosidade_pct(uint16_t raw);
+
 void uart_protocolo_init(void);
 void uart_enviar_telemetria(float temp, uint8_t lum_pct, bool cortina_aberta);
-bool uart_processar_recepcao(ConfigSistema *cfg);
+void uart_ler_loopback_e_imprimir(void); // <-- Novo protótipo do loopback
 
 uint32_t mapear_adc(uint32_t raw, uint32_t raw_max, uint32_t out_max) {
     return (raw * out_max) / raw_max;
@@ -41,11 +42,11 @@ bool aplicar_histerese(uint8_t valor, uint8_t lim_h, uint8_t lim_l, bool estado_
 }
 
 int main() {
-    // Inicializa a porta USB para comunicação
+    // Inicializa a porta USB para comunicação com o VS Code (Canal PC)
     stdio_init_all();
     
     adc_sensores_init();
-    uart_protocolo_init();
+    uart_protocolo_init(); // Inicializa os pinos de hardware TX e RX
     
     ConfigSistema cfg = {
         .lim_lum_h = LIM_LUM_H_DEFAULT,
@@ -56,26 +57,32 @@ int main() {
     
     bool cortina_aberta = false; 
 
-    // delay para dar tempo de abrir o Serial Monitor
     sleep_ms(2000); 
-    printf("=== AP2 Projeto 19 - MODO TESTE USB ===\n");
-    printf("ADC0=GPIO26(LDR) | ADC1=GPIO27(LM35)\n");
-    printf("---------------------------------------\n");
+    printf("=== AP2 Projeto 19 - TESTE DE LOOPBACK FISICO ===\n");
+    printf("Ligue um fio jumper do pino GPIO0 (TX) ao GPIO1 (RX)\n");
+    printf("---------------------------------------------------\n");
 
     while (true) {
-        uart_processar_recepcao(&cfg);
-        
+        // Leituras dos sensores
         uint16_t ldr_raw = adc_ler_canal(ADC_CHANNEL_LDR);
-        uint8_t lum_pct = adc_raw_para_luminosidade_pct(ldr_raw); // usar a função do módulo ADC
+        uint8_t lum_pct = adc_raw_para_luminosidade_pct(ldr_raw); 
         
         uint16_t lm35_raw = adc_ler_canal(ADC_CHANNEL_TEMP);
         float temp_c = adc_raw_para_temperatura(lm35_raw);
-                
+        
         cortina_aberta = aplicar_histerese(lum_pct, cfg.lim_lum_h, cfg.lim_lum_l, cortina_aberta);
         
+        // Pico emite o dado pelo pino físico TX
         uart_enviar_telemetria(temp_c, lum_pct, cortina_aberta);
         
-        sleep_ms(1000);
+        // Espera o dado viajar pelo jumper até o pino RX
+        sleep_ms(50);
+        
+        // Lê o pino RX e imprime na tela
+        uart_ler_loopback_e_imprimir();
+        
+        // Tempo restante da amostragem total do sistema
+        sleep_ms(950);
     }
     return 0;
 }
