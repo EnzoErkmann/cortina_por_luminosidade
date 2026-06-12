@@ -46,6 +46,7 @@ target_link_libraries(cortina_por_luminosidade
     hardware_uart
     hardware_gpio
     hardware_timer
+    hardware_pwm
 )
 
 target_include_directories(cortina_por_luminosidade PRIVATE ${CMAKE_CURRENT_LIST_DIR})
