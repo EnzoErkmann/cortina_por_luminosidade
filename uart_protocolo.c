@@ -1,4 +1,4 @@
-/* Módulo: UART Protocolo (LOOPBACK) */
+/* Módulo: UART Protocolo (LOOPBACK + AP3) */
 #include "hardware/uart.h"
 #include "hardware/gpio.h"
 #include "pico/stdlib.h"
@@ -20,12 +20,17 @@ void uart_protocolo_init(void) {
     gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
 }
 
-void uart_enviar_telemetria(float temp, uint8_t lum_pct, bool cortina_aberta) {
+// NOVA ASSINATURA: Agora recebe modo_auto e fan_ligado
+void uart_enviar_telemetria(float temp, uint8_t lum_pct, bool cortina_aberta, bool modo_auto, bool fan_ligado) {
     char tx_buffer[UART_BUF_SIZE];
 
-    // Monta a string em texto na memória
-    snprintf(tx_buffer, sizeof(tx_buffer), "TEMP:%.1f,LUM:%d,CORTINA:%s\r\n",
-             temp, lum_pct, cortina_aberta ? "ABERTA" : "FECHADA");
+    // Monta a string em texto na memória com as novas informações
+    snprintf(tx_buffer, sizeof(tx_buffer), "TEMP:%.1f,LUM:%d,CORTINA:%s,MODO:%s,VENT:%s\r\n",
+             temp, 
+             lum_pct, 
+             cortina_aberta ? "ABERTA" : "FECHADA",
+             modo_auto ? "AUTO" : "MANUAL",
+             fan_ligado ? "ON" : "OFF");
 
     // Envia os dados fisicamente pelo pino GPIO0 (TX)
     uart_puts(UART_ID, tx_buffer);
