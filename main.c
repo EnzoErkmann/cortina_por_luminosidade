@@ -1,4 +1,4 @@
-/* Módulo: Main / Programa Principal (LOOPBACK + AP3) */
+/* Módulo: Main / Programa Principal (LOOPBACK + AP3 + TELEMETRIA COMPLETA) */
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -36,7 +36,8 @@ float adc_raw_para_temperatura(uint16_t raw);
 uint8_t adc_raw_para_luminosidade_pct(uint16_t raw);
 
 void uart_protocolo_init(void);
-void uart_enviar_telemetria(float temp, uint8_t lum_pct, bool cortina_aberta);
+// NOVO PROTÓTIPO COM MODO E VENTOINHA:
+void uart_enviar_telemetria(float temp, uint8_t lum_pct, bool cortina_aberta, bool modo_auto, bool fan_ligado);
 void uart_ler_loopback_e_imprimir(void);
 
 // =========================================================================
@@ -173,10 +174,14 @@ int main() {
         }
         pwm_set_gpio_level(FAN_PIN, fan_duty);
         
-        // Envia telemetria usando o estado físico real da cortina
-        uart_enviar_telemetria(temp_c, lum_pct, cortina_estado_fisico);
+        // --- NOVO: Verifica estados para a telemetria ---
+        bool fan_ligado = (fan_duty > 0);     // Se o PWM for maior que 0, está ligado
+        bool modo_auto = !modo_manual;        // Se NÃO estiver em manual, é automático
         
-        // Espera o dado viajar e imprime (Mantendo a sua estrutura de 1 segundo!)
+        // Envia telemetria completa
+        uart_enviar_telemetria(temp_c, lum_pct, cortina_estado_fisico, modo_auto, fan_ligado);
+        
+        // Espera o dado viajar e imprime
         sleep_ms(50);
         uart_ler_loopback_e_imprimir();
         sleep_ms(950);
