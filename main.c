@@ -13,7 +13,7 @@
 #define ADC_CHANNEL_TEMP 1
 
 // Pinos dos Atuadores e Botão (AP3)
-#define SERVO_PIN 17          // Pino do Servo Motor da Cortina
+#define SERVO_PIN 18          // Pino do Servo Motor da Cortina
 #define FAN_PIN 16            // Pino do Ventilador (Ponte H / Transistor)
 #define BOTAO_MANUAL_PIN 15   // Botão de Interrupção Externa (Override)
 
