@@ -20,7 +20,7 @@ void uart_protocolo_init(void) {
     gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
 }
 
-// NOVA ASSINATURA: Agora recebe modo_auto e fan_ligado
+// recebe modo_auto e fan_ligado
 void uart_enviar_telemetria(float temp, uint8_t lum_pct, bool cortina_aberta, bool modo_auto, bool fan_ligado) {
     char tx_buffer[UART_BUF_SIZE];
 
