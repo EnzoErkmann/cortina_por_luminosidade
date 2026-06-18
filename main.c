@@ -53,12 +53,17 @@ volatile uint16_t servo_pulse_us = 1000;    // Posição do servo (1000 = fechad
 // =========================================================================
 // INTERRUPÇÕES E TIMERS (AP3)
 // =========================================================================
+
+// === TESTE 3: INTERRUPÇÃO EXTERNA ===
+// Acionamento do Botão de Override
 void botao_isr(uint gpio, uint32_t events) {
     if (gpio == BOTAO_MANUAL_PIN) {
         modo_manual = !modo_manual; // Alterna modo manual
     }
 }
 
+// === TESTE 2: TIMER E PWM DO SERVO MOTOR ===
+// Executado a cada 100ms para debounce e transição suave do servo
 bool timer_callback(struct repeating_timer *t) {
     if (modo_manual) return true; // Ignora automação se estiver manual
 
@@ -166,6 +171,7 @@ int main() {
         // Atualiza a vontade do sistema (o Timer executará a ação)
         alvo_aberta = aplicar_histerese(lum_pct, cfg.lim_lum_h, cfg.lim_lum_l, alvo_aberta);
         
+        // === TESTE 1: PWM VENTILADOR ===
         // PWM Ventilador (Proporcional à temp > 25)
         uint16_t fan_duty = 0;
         if (temp_c > 25.0f && !modo_manual) {
