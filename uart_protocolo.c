@@ -1,4 +1,4 @@
-/* Módulo: UART Protocolo (MÓDULO EXTERNO via UART1 + AP3) */
+/* Módulo: UART Protocolo (MÓDULO EXTERNO via UART1 + AP3 + LOG TX/RX UNIFICADO) */
 #include "hardware/uart.h"
 #include "hardware/gpio.h"
 #include "pico/stdlib.h"
@@ -12,6 +12,9 @@
 #define UART_TX_PIN 8
 #define UART_RX_PIN 9
 #define UART_BUF_SIZE 128
+
+static char ultimo_tx[UART_BUF_SIZE] = {0};
+static bool aguardando_eco = false;
 
 void uart_protocolo_init(void) {
     uart_init(UART_ID, BAUD_RATE);
@@ -29,11 +32,10 @@ void uart_enviar_telemetria(float temp, uint8_t lum_pct, bool cortina_aberta, bo
              modo_auto ? "AUTO" : "MANUAL",
              fan_ligado ? "ON" : "OFF");
 
-    // Limpa qualquer lixo/eco pendente no buffer de RX ANTES de transmitir,
-    // assim o que for lido depois é só o eco desta mensagem específica.
-    while (uart_is_readable(UART_ID)) {
-        (void)uart_getc(UART_ID);
-    }
+    // Guarda o que foi mandado, para sabermos identificar o eco depois
+    strncpy(ultimo_tx, tx_buffer, sizeof(ultimo_tx) - 1);
+    ultimo_tx[sizeof(ultimo_tx) - 1] = '\0';
+    aguardando_eco = true;
 
     char log_tx[UART_BUF_SIZE + 16];
     snprintf(log_tx, sizeof(log_tx), "[TX] %s\r\n", tx_buffer);
@@ -49,11 +51,14 @@ void uart_ler_loopback_e_imprimir(void) {
     }
     rx_buffer[i] = '\0';
 
-    if (i > 0) {
-        // Só usa printf (stdio/UART0) para exibir,
-        // sem nunca chamar uart_puts(UART_ID, ...) de novo dentro desta função.
-        // Isso quebra o ciclo de realimentação.
-        printf("[RX] %s\r\n\n", rx_buffer);
-        fflush(stdout);
+    if (i > 0 && aguardando_eco) {
+        // Isso é o eco do que acabamos de mandar (chegou via jumper TXD-RXD)
+        char log_rx[UART_BUF_SIZE + 16];
+        snprintf(log_rx, sizeof(log_rx), "[RX] %s\r\n\n", rx_buffer);
+        uart_puts(UART_ID, log_rx);   // escreve na MESMA UART1, mas só esta vez
+
+        aguardando_eco = false;       // marca como já tratado, não reage de novo
     }
+    // Se aguardando_eco já é false, qualquer coisa lida aqui é IGNORADA
+    // (evita reagir ao próprio log [RX] que acabamos de mandar, quebrando o loop)
 }
