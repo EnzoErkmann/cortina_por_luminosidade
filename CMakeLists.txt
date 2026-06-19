@@ -37,8 +37,8 @@ add_executable(cortina_por_luminosidade
 pico_set_program_name(cortina_por_luminosidade "cortina_por_luminosidade")
 pico_set_program_version(cortina_por_luminosidade "0.1")
 
-pico_enable_stdio_uart(cortina_por_luminosidade 0)
-pico_enable_stdio_usb(cortina_por_luminosidade 1)
+pico_enable_stdio_uart(cortina_por_luminosidade 1)
+pico_enable_stdio_usb(cortina_por_luminosidade 0)
 
 target_link_libraries(cortina_por_luminosidade 
     pico_stdlib
