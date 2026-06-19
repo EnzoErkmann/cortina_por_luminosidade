@@ -1,4 +1,4 @@
-/* Módulo: UART Protocolo (MÓDULO EXTERNO via UART1 + AP3 + LOG TX/RX UNIFICADO) */
+/* Módulo: UART Protocolo (1 MÓDULO MAX3232 + JUMPER, LOG TX/RX SEM ECO EM CASCATA) */
 #include "hardware/uart.h"
 #include "hardware/gpio.h"
 #include "pico/stdlib.h"
@@ -12,9 +12,6 @@
 #define UART_TX_PIN 8
 #define UART_RX_PIN 9
 #define UART_BUF_SIZE 128
-
-static char ultimo_tx[UART_BUF_SIZE] = {0};
-static bool aguardando_eco = false;
 
 void uart_protocolo_init(void) {
     uart_init(UART_ID, BAUD_RATE);
@@ -32,33 +29,46 @@ void uart_enviar_telemetria(float temp, uint8_t lum_pct, bool cortina_aberta, bo
              modo_auto ? "AUTO" : "MANUAL",
              fan_ligado ? "ON" : "OFF");
 
-    // Guarda o que foi mandado, para sabermos identificar o eco depois
-    strncpy(ultimo_tx, tx_buffer, sizeof(ultimo_tx) - 1);
-    ultimo_tx[sizeof(ultimo_tx) - 1] = '\0';
-    aguardando_eco = true;
+    // Limpa qualquer resíduo pendente no buffer ANTES de mandar
+    while (uart_is_readable(UART_ID)) {
+        (void)uart_getc(UART_ID);
+    }
 
-    char log_tx[UART_BUF_SIZE + 16];
-    snprintf(log_tx, sizeof(log_tx), "[TX] %s\r\n", tx_buffer);
-    uart_puts(UART_ID, log_tx);
-}
+    // 1) Manda só o dado puro (sem prefixo), termina com \n para servir de delimitador
+    char pacote[UART_BUF_SIZE];
+    snprintf(pacote, sizeof(pacote), "%s\n", tx_buffer);
+    uart_puts(UART_ID, pacote);
 
-void uart_ler_loopback_e_imprimir(void) {
+    // 2) Espera o eco voltar pelo jumper (é quase instantâneo, mas damos uma folga)
+    sleep_ms(20);
+
+    // 3) Lê o que voltou (deve ser exatamente o que mandamos, pois é loopback físico)
     char rx_buffer[UART_BUF_SIZE];
     int i = 0;
-
     while (uart_is_readable(UART_ID) && i < (int)(sizeof(rx_buffer) - 1)) {
         rx_buffer[i++] = uart_getc(UART_ID);
     }
     rx_buffer[i] = '\0';
 
-    if (i > 0 && aguardando_eco) {
-        // Isso é o eco do que acabamos de mandar (chegou via jumper TXD-RXD)
-        char log_rx[UART_BUF_SIZE + 16];
-        snprintf(log_rx, sizeof(log_rx), "[RX] %s\r\n\n", rx_buffer);
-        uart_puts(UART_ID, log_rx);   // escreve na MESMA UART1, mas só esta vez
-
-        aguardando_eco = false;       // marca como já tratado, não reage de novo
+    // 4) Escreve o log final UMA ÚNICA VEZ, com os dois rótulos juntos
+    char log_final[UART_BUF_SIZE * 2 + 32];
+    if (i > 0) {
+        snprintf(log_final, sizeof(log_final), "[TX] %s\r\n[RX] %s\r\n\n", tx_buffer, rx_buffer);
+    } else {
+        snprintf(log_final, sizeof(log_final), "[TX] %s\r\n[RX] (nada recebido)\r\n\n", tx_buffer);
     }
-    // Se aguardando_eco já é false, qualquer coisa lida aqui é IGNORADA
-    // (evita reagir ao próprio log [RX] que acabamos de mandar, quebrando o loop)
+    uart_puts(UART_ID, log_final);
+
+    // Antes de sair, descarta qualquer eco do PRÓPRIO log_final que tenha voltado,
+    // para não sobrar lixo pendurado pro próximo ciclo
+    sleep_ms(20);
+    while (uart_is_readable(UART_ID)) {
+        (void)uart_getc(UART_ID);
+    }
+}
+
+void uart_ler_loopback_e_imprimir(void) {
+    // Função mantida por compatibilidade com main.c, mas agora não faz nada:
+    // toda a leitura/log já acontece dentro de uart_enviar_telemetria().
+    // Isso evita uma segunda leitura concorrente do mesmo buffer.
 }
