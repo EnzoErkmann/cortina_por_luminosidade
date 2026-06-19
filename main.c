@@ -19,6 +19,8 @@
 
 // =========================================================================
 // NOVOS PINOS: AS 7 ENTRADAS DIGITAIS DE AUTOMAÇÃO AVANÇADA
+// ALTERADO: PIN_VENT_MAX movido de GPIO 8 para GPIO 14, liberando GPIO 8/9
+// para uso exclusivo da UART1 (módulo externo).
 // =========================================================================
 #define PIN_FIM_ABERTO    2  // 1. Fim de Curso: Cortina 100% aberta
 #define PIN_FIM_FECHADO   3  // 2. Fim de Curso: Cortina 100% fechada
@@ -26,7 +28,7 @@
 #define PIN_PIR           5  // 4. Sensor de Presença (PIR)
 #define PIN_CHUVA         6  // 5. Sensor de Chuva
 #define PIN_CINEMA        7  // 6. Modo Cinema
-#define PIN_VENT_MAX      8  // 7. Forçar Ventilação Máxima
+#define PIN_VENT_MAX      14 // 7. Forçar Ventilação Máxima (ERA GPIO 8)
 
 // Limites padrão
 #define LIM_LUM_H_DEFAULT 70
@@ -145,11 +147,16 @@ void hardware_entradas_init() {
     gpio_pull_up(BOTAO_MANUAL_PIN); 
     gpio_set_irq_enabled_with_callback(BOTAO_MANUAL_PIN, GPIO_IRQ_EDGE_FALL, true, &botao_isr);
 
-    // Loop para iniciar GPIOs 2 a 8 (Agora são 7 chaves físicas em vez de 8)
-    for (int i = 2; i <= 8; i++) {
-        gpio_init(i);
-        gpio_set_dir(i, GPIO_IN);
-        gpio_pull_up(i);
+    // =========================================================================
+    // ALTERADO: Inicialização individual das 7 chaves físicas, pulando o
+    // par 8/9 (reservado para UART1). Os pinos agora são: 2,3,4,5,6,7,14.
+    // =========================================================================
+    int pinos_entrada[] = { PIN_FIM_ABERTO, PIN_FIM_FECHADO, PIN_JANELA,
+                             PIN_PIR, PIN_CHUVA, PIN_CINEMA, PIN_VENT_MAX };
+    for (int i = 0; i < 7; i++) {
+        gpio_init(pinos_entrada[i]);
+        gpio_set_dir(pinos_entrada[i], GPIO_IN);
+        gpio_pull_up(pinos_entrada[i]);
     }
 }
 
