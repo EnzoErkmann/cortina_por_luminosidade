@@ -5,7 +5,7 @@
 
 ## 1. Descrição
 
-Sistema embarcado de automação residencial que controla uma cortina (servo PWM) e um ventilador (PWM proporcional) a partir de sensores de luminosidade (LDR) e temperatura (LM35). Inclui sete entradas digitais para lógica avançada, interrupção externa de trava de manutenção e telemetria serial via UART1 com loopback (MAX3232).
+Sistema embarcado de automação residencial que controla uma cortina (servo PWM) e um ventilador (PWM proporcional) a partir de sensores de luminosidade (LDR) e temperatura (LM35). Inclui entradas digitais para lógica avançada, interrupção externa de trava de manutenção e telemetria serial via UART1 com loopback (MAX3232).
 
 **Funcionalidades principais:**
 
